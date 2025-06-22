@@ -1,0 +1,33 @@
+{
+  "name": "agenda-contatos-api",
+  "version": "1.0.0",
+  "description": "API REST para gerenciar agenda de contatos com CRUD completo",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "seed": "npx knex seed:run --knexfile knexfile.js",
+    "setup": "npm run migrate && npm run seed",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "api",
+    "contatos",
+    "agenda",
+    "crud",
+    "nodejs",
+    "express",
+    "mysql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "knex": "^3.1.0",
+    "mysql2": "^3.14.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

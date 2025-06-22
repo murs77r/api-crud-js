@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda de Contatos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    input,
+    button {
+      margin: 5px 0;
+      padding: 8px;
+      width: 100%;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      width: auto;
+      padding: 8px 16px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .btn-edit {
+      background: #28a745;
+      padding: 4px 8px;
+      width: auto;
+      margin: 2px;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      padding: 4px 8px;
+      width: auto;
+      margin: 2px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    th {
+      background: #f8f9fa;
+    }
+
+    .actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .search-box {
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Agenda de Contatos</h1>
+
+  <form id="contactForm">
+    <input type="hidden" id="contactId" />
+    <input type="text" id="nome" placeholder="Nome Completo" required />
+    <input type="tel" id="numero" placeholder="(11) 99999-9999" required />
+    <button type="submit" id="submitBtn">Salvar Contato</button>
+  </form>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Pesquisar contatos..." />
+  </div>
+
+  <h2>Lista de Contatos</h2>
+  
+  <div id="loadingMessage" style="display: none;">Carregando contatos...</div>
+  
+  <table id="contactsTable" style="display: none;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>Telefone</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="contactsContainer"></tbody>
+  </table>
+  
+  <div id="emptyState" style="display: none;">
+    <p>Nenhum contato encontrado. Adicione seu primeiro contato usando o formulário acima.</p>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:3000/contatos";
+    let todosContatos = [];
+
+    // Carregar contatos do servidor
+    async function carregarContatos() {
+      try {
+        document.getElementById("loadingMessage").style.display = "block";
+        const response = await fetch(API_URL);
+        
+        if (!response.ok) {
+          throw new Error('Erro ao carregar contatos');
+        }
+        
+        todosContatos = await response.json();
+        exibirContatos(todosContatos);
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao carregar contatos');
+      } finally {
+        document.getElementById("loadingMessage").style.display = "none";
+      }
+    }
+
+    // Exibir contatos na tela
+    function exibirContatos(contatos) {
+      const container = document.getElementById("contactsContainer");
+      const table = document.getElementById("contactsTable");
+      const emptyState = document.getElementById("emptyState");
+      
+      container.innerHTML = "";
+      
+      if (contatos.length === 0) {
+        table.style.display = "none";
+        emptyState.style.display = "block";
+        return;
+      }
+      
+      emptyState.style.display = "none";
+      table.style.display = "table";
+      
+      contatos.forEach(contato => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${contato.id}</td>
+          <td>${contato.nome}</td>
+          <td>${contato.numero}</td>
+          <td class="actions">
+            <button class="btn-edit" onclick="editarContato(${contato.id})">Editar</button>
+            <button class="btn-delete" onclick="excluirContato(${contato.id})">Excluir</button>
+          </td>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // Salvar contato (criar ou atualizar)
+    async function salvarContato(event) {
+      event.preventDefault();
+      
+      const id = document.getElementById("contactId").value;
+      const nome = document.getElementById("nome").value.trim();
+      const numero = document.getElementById("numero").value.trim();
+      
+      if (!nome || !numero) {
+        alert('Por favor, preencha todos os campos');
+        return;
+      }
+      
+      const dados = { nome, numero };
+      const metodo = id ? "PUT" : "POST";
+      const url = id ? `${API_URL}/${id}` : API_URL;
+      
+      try {
+        const response = await fetch(url, {
+          method: metodo,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dados),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Erro ao salvar contato');
+        }
+        
+        limparFormulario();
+        carregarContatos();
+        alert(
+          id ? 'Contato atualizado com sucesso!' : 'Contato adicionado com sucesso!'
+        );
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao salvar contato');
+      }
+    }
+
+    // Editar contato
+    async function editarContato(id) {
+      try {
+        const response = await fetch(`${API_URL}/${id}`);
+        
+        if (!response.ok) {
+          throw new Error('Contato não encontrado');
+        }
+        
+        const contato = await response.json();
+        
+        document.getElementById("contactId").value = id;
+        document.getElementById("nome").value = contato.nome;
+        document.getElementById("numero").value = contato.numero;
+        document.getElementById("submitBtn").textContent = "Atualizar Contato";
+        
+        // Scroll para o formulário
+        document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao carregar dados do contato');
+      }
+    }
+
+    // Excluir contato
+    async function excluirContato(id) {
+      if (!confirm("Tem certeza que deseja excluir este contato?")) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+        
+        if (!response.ok) {
+          throw new Error('Erro ao excluir contato');
+        }
+        
+        carregarContatos();
+        alert('Contato excluído com sucesso!');
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao excluir contato');
+      }
+    }
+
+    // Pesquisar contatos
+    function pesquisarContatos() {
+      const termo = document.getElementById("searchInput").value.toLowerCase();
+      const contatosFiltrados = todosContatos.filter(contato =>
+        contato.nome.toLowerCase().includes(termo) ||
+        contato.numero.includes(termo)
+      );
+      exibirContatos(contatosFiltrados);
+    }
+
+    // Limpar formulário
+    function limparFormulario() {
+      document.getElementById("contactForm").reset();
+      document.getElementById("contactId").value = "";
+      document.getElementById("submitBtn").textContent = "Salvar Contato";
+    }
+
+    // Mostrar mensagem de feedback
+    function mostrarMensagem(texto, tipo) {
+      alert(texto);
+    }
+
+    // Formatação automática do número de telefone
+    document.getElementById("numero").addEventListener("input", function(e) {
+      let valor = e.target.value.replace(/\D/g, '');
+      
+      if (valor.length <= 11) {
+        if (valor.length <= 10) {
+          valor = valor.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+        } else {
+          valor = valor.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        }
+        e.target.value = valor;
+      }
+    });
+
+    // Event listeners
+    document.getElementById("contactForm").addEventListener("submit", salvarContato);
+    document.getElementById("searchInput").addEventListener("input", pesquisarContatos);
+
+    // Carregar contatos na inicialização
+    carregarContatos();
+  </script>
+
+</body>
+</html>
