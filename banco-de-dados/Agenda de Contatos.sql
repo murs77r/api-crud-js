@@ -13,13 +13,7 @@ CREATE TABLE IF NOT EXISTS contatos (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Inserir dados de exemplo
-INSERT INTO contatos (nome, numero) VALUES
-('João Silva', '(11) 99999-1234'),
-('Maria Santos', '(11) 98888-5678'),
-('Pedro Costa', '(11) 97777-9012'),
-('Ana Oliveira', '(11) 96666-3456'),
-('Carlos Ferreira', '(11) 95555-7890');
+-- Os dados de exemplo estão sendo inseridos utilizando-se do Knex.JS
 
 -- Verificar os dados inseridos
 SELECT * FROM contatos ORDER BY nome;
