@@ -7,7 +7,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "npx knex seed:run --knexfile knexfile.js",
-    "setup": "npm run migrate && npm run seed",
+    "setup": "npm run seed",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
